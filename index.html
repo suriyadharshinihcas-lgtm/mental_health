@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            text-align: center;
+            padding: 40px 20px;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            max-width: 650px;
+            margin: auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        p.subtitle {
+            color: #7f8c8d;
+            margin-top: 0;
+            margin-bottom: 30px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-box {
+            flex: 1;
+            padding: 20px 10px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .stat-box span {
+            display: block;
+            font-size: 2em;
+            margin-top: 10px;
+        }
+        .happy { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .anxiety { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .stress { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        .status-panel {
+            padding: 25px;
+            border-radius: 8px;
+            background: #e9ecef;
+            font-size: 1.1em;
+            line-height: 1.6;
+            transition: background 0.3s ease;
+        }
+        .status-panel strong {
+            display: block;
+            margin-top: 15px;
+            color: #2c3e50;
+        }
+        .status-panel strong:first-child {
+            margin-top: 0;
+        }
+        
+        button {
+            background: #2980b9;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #3498db;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: #95a5a6;
+            margin-top: 15px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Emotional State Dashboard</h1>
+        <p class="subtitle">Live API Data from ESP32 System</p>
+        
+        <div class="stats">
+            <div class="stat-box happy">
+                Happy
+                <span id="val-happy">--</span>
+            </div>
+            <div class="stat-box anxiety">
+                Anxiety
+                <span id="val-anxiety">--</span>
+            </div>
+            <div class="stat-box stress">
+                Stress
+                <span id="val-stress">--</span>
+            </div>
+        </div>
+
+        <div class="status-panel" id="main-panel">
+            <strong>Current Diagnosis:</strong> 
+            <span id="status-text">Loading sensor data...</span>
+            
+            <strong>Recommendation:</strong> 
+            <span id="recommendation-text">Please wait while we connect to ThingSpeak.</span>
+        </div>
+
+        <button onclick="fetchData()">Force Refresh Data</button>
+        <span class="timestamp" id="last-update">Last updated: Never</span>
+    </div>
+
+    <script>
+        // ThingSpeak API Configuration
+        const channelID = '3472593';
+        const readAPIKey = '9OTH558YRMFMDDC0';
+        
+        // We request results=1 to only get the single most recent data entry
+        const url = `https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=1`;
+
+        async function fetchData() {
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.feeds && data.feeds.length > 0) {
+                    const feed = data.feeds[0];
+                    
+                    // Parse values. If a field is empty (null), default it to 0
+                    const happy = parseInt(feed.field1) || 0;
+                    const anxiety = parseInt(feed.field2) || 0;
+                    const stress = parseInt(feed.field3) || 0;
+
+                    // Update the numbers on the screen
+                    document.getElementById('val-happy').innerText = happy;
+                    document.getElementById('val-anxiety').innerText = anxiety;
+                    document.getElementById('val-stress').innerText = stress;
+
+                    // Update timestamp
+                    const date = new Date(feed.created_at);
+                    document.getElementById('last-update').innerText = "Last updated: " + date.toLocaleTimeString();
+
+                    // Run the logic to determine mental health status
+                    evaluateMentalHealth(happy, anxiety, stress);
+                } else {
+                    document.getElementById('status-text').innerText = "No data found.";
+                    document.getElementById('recommendation-text').innerText = "Make sure your ESP32 has successfully sent data to ThingSpeak.";
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('status-text').innerText = "Connection Error.";
+                document.getElementById('recommendation-text').innerText = "Could not reach ThingSpeak API. Check your internet connection.";
+            }
+        }
+
+        function evaluateMentalHealth(happy, anxiety, stress) {
+            let status = "";
+            let recommendation = "";
+            let panelColor = "#e9ecef"; // Default gray
+
+            // Logic: Whichever value is currently the highest determines the state
+            if (stress > happy && stress >= anxiety) {
+                status = "Critical Stress Levels Detected";
+                recommendation = "You need professional support to navigate this. It is highly recommended to schedule an appointment with a psychologist or counselor.";
+                panelColor = "#f8d7da"; // Red background
+            } 
+            else if (anxiety > happy && anxiety > stress) {
+                status = "Elevated Anxiety Detected";
+                recommendation = "You seem overwhelmed. Please talk to a close friend, family member, or someone you trust about how you are feeling. Try grounding exercises.";
+                panelColor = "#fff3cd"; // Yellow background
+            } 
+            else if (happy >= stress && happy >= anxiety && happy > 0) {
+                status = "Good Mental Health Indicator";
+                recommendation = "Things look positive! Keep up the good energy, maintain your current routine, and continue taking care of yourself.";
+                panelColor = "#d4edda"; // Green background
+            } 
+            else {
+                status = "Awaiting sufficient data...";
+                recommendation = "Press the buttons on your hardware device to establish a baseline emotional state.";
+                panelColor = "#e9ecef";
+            }
+
+            // Apply the text and colors to the website
+            document.getElementById('status-text').innerText = status;
+            document.getElementById('recommendation-text').innerText = recommendation;
+            document.getElementById('main-panel').style.background = panelColor;
+        }
+
+        // Fetch data immediately when the webpage loads
+        window.onload = fetchData;
+        
+        // Automatically ping ThingSpeak every 15 seconds to look for new button presses
+        setInterval(fetchData, 15000);
+    </script>
+</body>
+</html>
