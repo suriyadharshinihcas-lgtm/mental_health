@@ -3,38 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mental Health Tracker</title>
+    <title>Mental Health Tracker Dashboard</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f7f6;
             color: #333;
-            text-align: center;
-            padding: 40px 20px;
             margin: 0;
+            padding: 20px;
         }
         .container {
             background: white;
-            max-width: 650px;
+            max-width: 800px;
             margin: auto;
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-        p.subtitle {
-            color: #7f8c8d;
-            margin-top: 0;
-            margin-bottom: 30px;
-        }
-        .stats {
+        .header {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .header-titles h1 {
+            color: #2c3e50;
+            margin: 0 0 5px 0;
+        }
+        .header-titles p {
+            color: #7f8c8d;
+            margin: 0;
+        }
+        .badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .badge::before {
+            content: '';
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .online { background: #d4edda; color: #155724; }
+        .online::before { background: #28a745; }
+        .offline { background: #f8d7da; color: #721c24; }
+        .offline::before { background: #dc3545; }
+
+        .stats {
+            display: flex;
             gap: 15px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         .stat-box {
             flex: 1;
@@ -42,97 +68,187 @@
             border-radius: 8px;
             font-size: 1.1em;
             font-weight: bold;
+            text-align: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
         }
-        .stat-box span {
-            display: block;
-            font-size: 2em;
-            margin-top: 10px;
-        }
+        .stat-box span.count { font-size: 2em; margin-top: 10px; }
+        .stat-box span.average { font-size: 0.85em; font-weight: normal; opacity: 0.8; margin-top: 5px; }
         .happy { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .anxiety { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
         .stress { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         
         .status-panel {
-            padding: 25px;
+            padding: 20px;
             border-radius: 8px;
             background: #e9ecef;
             font-size: 1.1em;
-            line-height: 1.6;
+            line-height: 1.5;
+            margin-bottom: 25px;
             transition: background 0.3s ease;
         }
-        .status-panel strong {
-            display: block;
-            margin-top: 15px;
-            color: #2c3e50;
+        .status-panel strong { display: block; margin-top: 10px; color: #2c3e50; }
+        .status-panel strong:first-child { margin-top: 0; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
-        .status-panel strong:first-child {
+        @media (max-width: 600px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .stats { flex-direction: column; }
+        }
+
+        .card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .card h3 {
             margin-top: 0;
+            margin-bottom: 15px;
+            color: #34495e;
+            font-size: 1.1em;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
         }
-        
-        button {
-            background: #2980b9;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 25px;
-            font-size: 1em;
+
+        /* Timeline Styles */
+        .timeline-item {
+            padding: 8px 0;
+            border-bottom: 1px dashed #ccc;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+        }
+        .timeline-item:last-child { border-bottom: none; }
+        .tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
             font-weight: bold;
-            transition: background 0.2s;
         }
-        button:hover {
-            background: #3498db;
+
+        /* Dummy Forms and Buttons */
+        .dummy-form { display: flex; flex-direction: column; gap: 10px; }
+        input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 90%;
         }
-        .timestamp {
-            font-size: 0.8em;
-            color: #95a5a6;
-            margin-top: 15px;
-            display: block;
+        button {
+            background: #2980b9; color: white; border: none;
+            padding: 10px 15px; border-radius: 6px; cursor: pointer;
+            font-weight: bold; transition: background 0.2s;
+        }
+        button:hover { background: #3498db; }
+        .btn-voice {
+            background: #8e44ad; width: 100%; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-voice:hover { background: #9b59b6; }
+        .btn-group { display: flex; gap: 5px; }
+        .btn-group button { flex: 1; padding: 8px; font-size: 0.85em; }
+
+        .footer {
+            text-align: center; margin-top: 25px;
+            font-size: 0.8em; color: #95a5a6;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Emotional State Dashboard</h1>
-        <p class="subtitle">Live API Data from ESP32 System</p>
+        <!-- Header & Band Status -->
+        <div class="header">
+            <div class="header-titles">
+                <h1>Emotional State Dashboard</h1>
+                <p>Live Hardware Analytics</p>
+            </div>
+            <div id="band-status" class="badge offline">
+                Band: Checking...
+            </div>
+        </div>
         
+        <!-- Live Counters -->
         <div class="stats">
             <div class="stat-box happy">
                 Happy
-                <span id="val-happy">--</span>
+                <span class="count" id="val-happy">--</span>
+                <span class="average" id="avg-happy">Avg: --%</span>
             </div>
             <div class="stat-box anxiety">
                 Anxiety
-                <span id="val-anxiety">--</span>
+                <span class="count" id="val-anxiety">--</span>
+                <span class="average" id="avg-anxiety">Avg: --%</span>
             </div>
             <div class="stat-box stress">
                 Stress
-                <span id="val-stress">--</span>
+                <span class="count" id="val-stress">--</span>
+                <span class="average" id="avg-stress">Avg: --%</span>
             </div>
         </div>
 
+        <!-- Main Diagnosis Panel -->
         <div class="status-panel" id="main-panel">
-            <strong>Current Diagnosis:</strong> 
-            <span id="status-text">Loading sensor data...</span>
+            <strong>Overall Diagnosis:</strong> 
+            <span id="status-text">Loading historical data...</span>
             
             <strong>Recommendation:</strong> 
-            <span id="recommendation-text">Please wait while we connect to ThingSpeak.</span>
+            <span id="recommendation-text">Please wait while we calculate averages.</span>
         </div>
 
-        <button onclick="fetchData()">Force Refresh Data</button>
-        <span class="timestamp" id="last-update">Last updated: Never</span>
+        <!-- Extra Features Grid -->
+        <div class="dashboard-grid">
+            
+            <!-- Pattern Timeline -->
+            <div class="card">
+                <h3>🕰️ Pattern Timeline</h3>
+                <div id="timeline-container">
+                    <i>Loading recent activity...</i>
+                </div>
+            </div>
+
+            <!-- Interactivity & Linking -->
+            <div class="card">
+                <h3>🎙️ Voice Check-in</h3>
+                <button class="btn-voice" onclick="alert('Under development see u here soon')">
+                    🎤 Start Voice Check-in
+                </button>
+
+                <h3 style="margin-top: 20px;">📝 Manual Log (Dummy)</h3>
+                <div class="btn-group">
+                    <button style="background: #27ae60;" onclick="alert('Happy logged manually!')">Happy</button>
+                    <button style="background: #f39c12;" onclick="alert('Anxiety logged manually!')">Anxiety</button>
+                    <button style="background: #c0392b;" onclick="alert('Stress logged manually!')">Stress</button>
+                </div>
+
+                <h3 style="margin-top: 20px;">🤝 Supporter Linking</h3>
+                <div class="dummy-form">
+                    <input type="text" placeholder="Supporter's Email or Phone" id="supporter-input">
+                    <button onclick="linkSupporter()">Send Invite Link</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            <button onclick="fetchData()" style="margin-bottom: 10px;">Refresh Analytics</button>
+            <br>
+            <span id="last-update">Last system update: Never</span>
+        </div>
     </div>
 
     <script>
-        // ThingSpeak API Configuration
         const channelID = '3472593';
         const readAPIKey = '9OTH558YRMFMDDC0';
         
-        // We request results=1 to only get the single most recent data entry
-        const url = `https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=1`;
+        // Fetch the last 100 results
+        const url = `https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=100`;
 
         async function fetchData() {
             try {
@@ -140,55 +256,104 @@
                 const data = await response.json();
                 
                 if (data.feeds && data.feeds.length > 0) {
-                    const feed = data.feeds[0];
-                    
-                    // Parse values. If a field is empty (null), default it to 0
-                    const happy = parseInt(feed.field1) || 0;
-                    const anxiety = parseInt(feed.field2) || 0;
-                    const stress = parseInt(feed.field3) || 0;
+                    let happy = 0, anxiety = 0, stress = 0;
+                    let timelineHTML = '';
+                    let timelineCount = 0;
 
-                    // Update the numbers on the screen
+                    // Parse Data for Counters and Timeline (from newest to oldest)
+                    for (let i = data.feeds.length - 1; i >= 0; i--) {
+                        let feed = data.feeds[i];
+                        let activeEmotion = null;
+                        let tagColor = '#ccc';
+
+                        // Check which button was pressed in this specific feed
+                        if (feed.field1 !== null) { 
+                            if (happy === 0) happy = parseInt(feed.field1);
+                            activeEmotion = 'Happy'; tagColor = '#d4edda; color: #155724;'; 
+                        }
+                        else if (feed.field2 !== null) { 
+                            if (anxiety === 0) anxiety = parseInt(feed.field2);
+                            activeEmotion = 'Anxiety'; tagColor = '#fff3cd; color: #856404;';
+                        }
+                        else if (feed.field3 !== null) { 
+                            if (stress === 0) stress = parseInt(feed.field3);
+                            activeEmotion = 'Stress'; tagColor = '#f8d7da; color: #721c24;';
+                        }
+
+                        // Build Timeline HTML (limit to last 5 events)
+                        if (activeEmotion && timelineCount < 5) {
+                            let timeStr = new Date(feed.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            let dateStr = new Date(feed.created_at).toLocaleDateString();
+                            timelineHTML += `
+                                <div class="timeline-item">
+                                    <span class="tag" style="background: ${tagColor}">${activeEmotion}</span>
+                                    <span>${dateStr} ${timeStr}</span>
+                                </div>`;
+                            timelineCount++;
+                        }
+                    }
+
+                    document.getElementById('timeline-container').innerHTML = timelineHTML || '<i>No recent activity found.</i>';
+
+                    // Update UI Counters
+                    let total = happy + anxiety + stress;
+                    let avgHappy = total > 0 ? Math.round((happy / total) * 100) : 0;
+                    let avgAnxiety = total > 0 ? Math.round((anxiety / total) * 100) : 0;
+                    let avgStress = total > 0 ? Math.round((stress / total) * 100) : 0;
+
                     document.getElementById('val-happy').innerText = happy;
+                    document.getElementById('avg-happy').innerText = `Avg: ${avgHappy}%`;
                     document.getElementById('val-anxiety').innerText = anxiety;
+                    document.getElementById('avg-anxiety').innerText = `Avg: ${avgAnxiety}%`;
                     document.getElementById('val-stress').innerText = stress;
+                    document.getElementById('avg-stress').innerText = `Avg: ${avgStress}%`;
 
-                    // Update timestamp
-                    const date = new Date(feed.created_at);
-                    document.getElementById('last-update').innerText = "Last updated: " + date.toLocaleTimeString();
+                    // Evaluate Diagnosis
+                    evaluateMentalHealth(avgHappy, avgAnxiety, avgStress);
 
-                    // Run the logic to determine mental health status
-                    evaluateMentalHealth(happy, anxiety, stress);
-                } else {
-                    document.getElementById('status-text').innerText = "No data found.";
-                    document.getElementById('recommendation-text').innerText = "Make sure your ESP32 has successfully sent data to ThingSpeak.";
+                    // Update Timestamps & Band Status
+                    const lastFeedDate = new Date(data.feeds[data.feeds.length - 1].created_at);
+                    document.getElementById('last-update').innerText = "Last system update: " + lastFeedDate.toLocaleTimeString();
+                    
+                    // Check if Band is Online (Did it send data in the last 5 minutes?)
+                    const now = new Date();
+                    const diffMinutes = (now - lastFeedDate) / (1000 * 60);
+                    const statusBadge = document.getElementById('band-status');
+                    
+                    if (diffMinutes <= 5) {
+                        statusBadge.className = 'badge online';
+                        statusBadge.innerText = 'Band: Online';
+                    } else {
+                        statusBadge.className = 'badge offline';
+                        statusBadge.innerText = 'Band: Offline';
+                    }
+
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);
                 document.getElementById('status-text').innerText = "Connection Error.";
-                document.getElementById('recommendation-text').innerText = "Could not reach ThingSpeak API. Check your internet connection.";
             }
         }
 
-        function evaluateMentalHealth(happy, anxiety, stress) {
+        function evaluateMentalHealth(avgHappy, avgAnxiety, avgStress) {
             let status = "";
             let recommendation = "";
-            let panelColor = "#e9ecef"; // Default gray
+            let panelColor = "#e9ecef"; 
 
-            // Logic: Whichever value is currently the highest determines the state
-            if (stress > happy && stress >= anxiety) {
-                status = "Critical Stress Levels Detected";
+            if (avgStress > avgHappy && avgStress >= avgAnxiety) {
+                status = `Critical Stress Detected (${avgStress}% of total logs)`;
                 recommendation = "You need professional support to navigate this. It is highly recommended to schedule an appointment with a psychologist or counselor.";
-                panelColor = "#f8d7da"; // Red background
+                panelColor = "#f8d7da"; 
             } 
-            else if (anxiety > happy && anxiety > stress) {
-                status = "Elevated Anxiety Detected";
+            else if (avgAnxiety > avgHappy && avgAnxiety > avgStress) {
+                status = `Elevated Anxiety Detected (${avgAnxiety}% of total logs)`;
                 recommendation = "You seem overwhelmed. Please talk to a close friend, family member, or someone you trust about how you are feeling. Try grounding exercises.";
-                panelColor = "#fff3cd"; // Yellow background
+                panelColor = "#fff3cd"; 
             } 
-            else if (happy >= stress && happy >= anxiety && happy > 0) {
-                status = "Good Mental Health Indicator";
+            else if (avgHappy >= avgStress && avgHappy >= avgAnxiety && avgHappy > 0) {
+                status = `Good Mental Health Baseline (${avgHappy}% of total logs)`;
                 recommendation = "Things look positive! Keep up the good energy, maintain your current routine, and continue taking care of yourself.";
-                panelColor = "#d4edda"; // Green background
+                panelColor = "#d4edda"; 
             } 
             else {
                 status = "Awaiting sufficient data...";
@@ -196,17 +361,24 @@
                 panelColor = "#e9ecef";
             }
 
-            // Apply the text and colors to the website
             document.getElementById('status-text').innerText = status;
             document.getElementById('recommendation-text').innerText = recommendation;
             document.getElementById('main-panel').style.background = panelColor;
         }
 
-        // Fetch data immediately when the webpage loads
+        function linkSupporter() {
+            const input = document.getElementById('supporter-input').value;
+            if(input === "") {
+                alert("Please enter an email or phone number first.");
+            } else {
+                alert(`Invite link sent to ${input}! (This is a dummy feature)`);
+                document.getElementById('supporter-input').value = '';
+            }
+        }
+
+        // Initialize and set auto-refresh
         window.onload = fetchData;
-        
-        // Automatically ping ThingSpeak every 15 seconds to look for new button presses
-        setInterval(fetchData, 15000);
+        setInterval(fetchData, 15000); // Check for updates every 15 seconds
     </script>
 </body>
 </html>
