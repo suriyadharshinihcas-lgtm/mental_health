@@ -76,8 +76,8 @@
         .stat-box span.count { font-size: 2em; margin-top: 10px; }
         .stat-box span.average { font-size: 0.85em; font-weight: normal; opacity: 0.8; margin-top: 5px; }
         .happy { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .anxiety { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
-        .stress { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .anger { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .anxious { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         
         .status-panel {
             padding: 20px;
@@ -186,10 +186,10 @@
                 <span class="count" id="val-anxiety">--</span>
                 <span class="average" id="avg-anxiety">Avg: --%</span>
             </div>
-            <div class="stat-box stress">
-                Stress
-                <span class="count" id="val-stress">--</span>
-                <span class="average" id="avg-stress">Avg: --%</span>
+            <div class="stat-box anxious">
+                anxious
+                <span class="count" id="val-anxious">--</span>
+                <span class="average" id="avg-anxious">Avg: --%</span>
             </div>
         </div>
 
@@ -224,7 +224,7 @@
                 <div class="btn-group">
                     <button style="background: #27ae60;" onclick="alert('Happy logged manually!')">Happy</button>
                     <button style="background: #f39c12;" onclick="alert('Anxiety logged manually!')">Anxiety</button>
-                    <button style="background: #c0392b;" onclick="alert('Stress logged manually!')">Stress</button>
+                    <button style="background: #c0392b;" onclick="alert('anxious logged manually!')">anxious</button>
                 </div>
 
                 <h3 style="margin-top: 20px;">🤝 Supporter Linking</h3>
@@ -256,7 +256,7 @@
                 const data = await response.json();
                 
                 if (data.feeds && data.feeds.length > 0) {
-                    let happy = 0, anxiety = 0, stress = 0;
+                    let happy = 0, anxiety = 0, anxious = 0;
                     let timelineHTML = '';
                     let timelineCount = 0;
 
@@ -276,8 +276,8 @@
                             activeEmotion = 'Anxiety'; tagColor = '#fff3cd; color: #856404;';
                         }
                         else if (feed.field3 !== null) { 
-                            if (stress === 0) stress = parseInt(feed.field3);
-                            activeEmotion = 'Stress'; tagColor = '#f8d7da; color: #721c24;';
+                            if (anxious === 0) anxious = parseInt(feed.field3);
+                            activeEmotion = 'anxious'; tagColor = '#f8d7da; color: #721c24;';
                         }
 
                         // Build Timeline HTML (limit to last 5 events)
@@ -296,20 +296,20 @@
                     document.getElementById('timeline-container').innerHTML = timelineHTML || '<i>No recent activity found.</i>';
 
                     // Update UI Counters
-                    let total = happy + anxiety + stress;
+                    let total = happy + anxiety + anxious;
                     let avgHappy = total > 0 ? Math.round((happy / total) * 100) : 0;
                     let avgAnxiety = total > 0 ? Math.round((anxiety / total) * 100) : 0;
-                    let avgStress = total > 0 ? Math.round((stress / total) * 100) : 0;
+                    let avganxious = total > 0 ? Math.round((anxious / total) * 100) : 0;
 
                     document.getElementById('val-happy').innerText = happy;
                     document.getElementById('avg-happy').innerText = `Avg: ${avgHappy}%`;
                     document.getElementById('val-anxiety').innerText = anxiety;
                     document.getElementById('avg-anxiety').innerText = `Avg: ${avgAnxiety}%`;
-                    document.getElementById('val-stress').innerText = stress;
-                    document.getElementById('avg-stress').innerText = `Avg: ${avgStress}%`;
+                    document.getElementById('val-anxious').innerText = anxious;
+                    document.getElementById('avg-anxious').innerText = `Avg: ${avganxious}%`;
 
                     // Evaluate Diagnosis
-                    evaluateMentalHealth(avgHappy, avgAnxiety, avgStress);
+                    evaluateMentalHealth(avgHappy, avgAnxiety, avganxious);
 
                     // Update Timestamps & Band Status
                     const lastFeedDate = new Date(data.feeds[data.feeds.length - 1].created_at);
@@ -335,22 +335,22 @@
             }
         }
 
-        function evaluateMentalHealth(avgHappy, avgAnxiety, avgStress) {
+        function evaluateMentalHealth(avgHappy, avgAnxiety, avganxious) {
             let status = "";
             let recommendation = "";
             let panelColor = "#e9ecef"; 
 
-            if (avgStress > avgHappy && avgStress >= avgAnxiety) {
-                status = `Critical Stress Detected (${avgStress}% of total logs)`;
+            if (avganxious > avgHappy && avganxious >= avgAnxiety) {
+                status = `Critical anxious Detected (${avganxious}% of total logs)`;
                 recommendation = "You need professional support to navigate this. It is highly recommended to schedule an appointment with a psychologist or counselor.";
                 panelColor = "#f8d7da"; 
             } 
-            else if (avgAnxiety > avgHappy && avgAnxiety > avgStress) {
+            else if (avgAnxiety > avgHappy && avgAnxiety > avganxious) {
                 status = `Elevated Anxiety Detected (${avgAnxiety}% of total logs)`;
                 recommendation = "You seem overwhelmed. Please talk to a close friend, family member, or someone you trust about how you are feeling. Try grounding exercises.";
                 panelColor = "#fff3cd"; 
             } 
-            else if (avgHappy >= avgStress && avgHappy >= avgAnxiety && avgHappy > 0) {
+            else if (avgHappy >= avganxious && avgHappy >= avgAnxiety && avgHappy > 0) {
                 status = `Good Mental Health Baseline (${avgHappy}% of total logs)`;
                 recommendation = "Things look positive! Keep up the good energy, maintain your current routine, and continue taking care of yourself.";
                 panelColor = "#d4edda"; 
